@@ -2,9 +2,38 @@ module Access
     ( Accessor, Accessor'
     , accessor
     , get, set, update
-    , compose
+    , compose, (@.)
     , allExamplesOk'_'
     ) where
+
+
+{-| # Access
+
+This module has the primitives which make working with accessors a cake walk:
+
+    atIndex = accessor -- Let's pretend for the moment this exists
+    foo = accessor .foo (\newFoo x -> { x | foo <- newFoo })
+
+    manyFoos = [{ foo = { bar = 1 } }, { foo = { bar = 42 } }]
+
+    manyFoos |> set (atIndex 1 @. foo @. bar) 20 == [{ foo = 1 }, { foo = 20 }]
+    manyFoos |> get (atIndex 1 @. foo) == { bar = 1 }
+
+Notice how not only getting values out of a deep structure is now easily possible but also that updating them is now as easy!
+As evident by the hypothetical `atIndex` accessor, this can be extended far beyond simple field access.
+
+I will provide compatible accessors in my [`Graph`](https://github.com/sgraf812/elm-graph) library, *without actually depending on this library*, just because it is such a hassle to provide
+getters and setter for all use cases when all that is needed are some simple accessors which compose well through `@.`.
+
+## Type aliases
+@docs Accessor, Accessors'
+## Make your accessor
+@docs accessor, compose, (@.)
+## Access patterns
+@docs get, set, update
+
+-}
+
 
 import Lazy exposing (Lazy)
 import Debug
@@ -173,10 +202,27 @@ ex5 =
     in set (foo@.bar) 2 x == { foo = { bar = 2 } }
 
 The syntax was carefully chosen to mirror record field access. 
-You can even use the infix synonyms `^.` and `^~` for `get` and `set` to get particular syntactic frauds.
+You can even use the infix synonym `^.` for `get` to get particular syntactic frauds.
 Although that may need some getting used to.
 -}
 (@.) = compose
 
+
+ex6 : Bool
+ex6 =
+    let x = { foo = { bar = 1 } }
+    in x^.foo@.bar == 1
+
+{-| An infix synonym for `get`.
+
+    let x = { foo = { bar = 1 } }
+    in x^.foo@.bar == 1
+
+-}
+(^.) val acc = get acc val
+
+infixl 7 ^.
+infixl 8 @.
+
 allExamplesOk'_' : Bool
-allExamplesOk'_' = ex1 && ex2 && ex3 && ex4 && ex5
+allExamplesOk'_' = ex1 && ex2 && ex3 && ex4 && ex5 && ex6
